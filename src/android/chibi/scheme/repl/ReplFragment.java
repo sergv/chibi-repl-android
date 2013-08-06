@@ -10,7 +10,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.chibi.scheme.repl.R;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -19,24 +18,17 @@ import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.LoaderManager.LoaderCallbacks;
-import android.support.v4.content.Loader;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
 /**
@@ -46,19 +38,13 @@ import android.widget.Toast;
  * @author Olexandr Tereshchuk - <a href="http://stanfy.com.ua">Stanfy LLC</a>
  * @author Sergey Vinokurov (serg.foo@gmail.com)
  */
-public class ReplFragment extends Fragment /* implements LoaderCallbacks<String> */ {
+public class ReplFragment extends Fragment {
 
 /** Logging tag. */
-public static final String TAG = "scheme-droid";
+public static final String TAG = "chibi";
 
 /** Arguments. */
-public static final String ARG_FILE = "scheme_script_file";
-
-/** Loader ID. */
-private static final int LOADER_SCRIPT = 1, LOADER_INIT = 2;
-
-/** Init file. */
-private static final String INIT_FILE = "jscheme.init";
+public static final String ARG_FILE = "file-to-open";
 
 private static final int INTENT_LOAD_FILE = 1;
 
@@ -71,7 +57,7 @@ private InteractionAdapter interaction_history_adapter;
 private EditText entry;
 
 /** File was loaded. */
-private boolean loadedFile = false, initialized = false;
+private boolean initialized = false;
 
 public class InteractionCell {
     public final String input;
@@ -126,6 +112,7 @@ private class InteractionAdapter extends BaseAdapter {
         notifyDataSetInvalidated();
     }
 }
+
 
 @Override
 public void onCreate(final Bundle savedInstanceState) {
@@ -231,9 +218,10 @@ public void onActivityCreated(final Bundle savedInstanceState) {
     if (!initialized) {
         init();
     }
-    // if (!loadedFile && getArguments() != null && getArguments().containsKey(ARG_FILE)) {
-    //     getLoaderManager().initLoader(LOADER_SCRIPT, getArguments(), this);
-    // }
+    Bundle args = getArguments();
+    if (args != null && args.containsKey(ARG_FILE)) {
+        loadFile(args.getString(ARG_FILE));
+    }
 }
 
 @Override
@@ -280,30 +268,34 @@ public void onActivityResult(int requestCode, int resultCode, Intent data) {
         data != null &&
         data.getData() != null) {
         if (requestCode == INTENT_LOAD_FILE) {
-            final Uri uri = data.getData();
-            final String filename = uri.getPath();
-            final File f = new File(filename);
-            if (f.exists()) {
-                String code = "(load \"" + f.getAbsolutePath() + "\")";
-                if (entry.getText().toString().trim().length() == 0) {
-                    /* if there were no input then paste loading code so
-                       user may see it in case of errors */
-                    entry.setText(code);
-                }
-                evaluate(code);
-            } else {
-                complainDialog("Error while loading",
-                               String.format("File %s does not exists",
-                                             filename));
-            }
+            loadFile(data.getData().getPath());
         }
     }
 }
 
+private void loadFile(final String filename) {
+    final File f = new File(filename);
+    if (f.exists()) {
+        String code = "(load \"" + f.getAbsolutePath() + "\")";
+        if (entry.getText().toString().trim().length() == 0) {
+              /* if there were no input then paste loading code so
+                 user may see it in case of errors */
+            entry.setText(code);
+        }
+        evaluate(code);
+    } else {
+        complainDialog("Error while loading",
+                       String.format("File %s does not exists",
+                                     filename));
+    }
+
+}
+
 private void init() {
-    // final Bundle args = new Bundle(1);
-    // args.putString(ARG_FILE, INIT_FILE);
-    // getLoaderManager().initLoader(LOADER_INIT, args, this);
+    if (! initialized) {
+        evaluate("(import (scheme base))");
+        initialized = true;
+    }
 }
 
 private void clear() {
@@ -320,7 +312,6 @@ private void clear() {
  * Processes the code in the entry EditText and updates the UI.
  */
 private void evaluate(final String input) {
-
     /* TODO: move this to separate evaluation thread to make interrupts
        work; */
     if (input.length() > 0) {
@@ -333,82 +324,6 @@ private void evaluate(final String input) {
         Toast.makeText(getActivity(), R.string.error_code_empty, Toast.LENGTH_SHORT).show();
     }
 }
-
-/*@Override
-public Loader<String> onCreateLoader(final int loaderId, final Bundle args) {
-    entry.setEnabled(false);
-    entry.setHint(R.string.input_code_loading_hint);
-    return new AssetConfigurator(this, args.getString(ARG_FILE));
-} */
-
-// @Override
-// public void onLoadFinished(final Loader<String> loader, final String data) {
-//     if (loader.getId() == LOADER_INIT) {
-//         initialized = true;
-//     } else {
-//         loadedFile = true;
-//     }
-//     String output = data;
-//     if (output == null) {
-//         output = "";
-//     }
-//     interaction_history_adapter.addCell(
-//         new InteractionCell("(load \"" + ((AssetConfigurator) loader).getPath() + "\")",
-//                             output));
-//     getLoaderManager().destroyLoader(loader.getId());
-//     if (getLoaderManager().getLoader(LOADER_INIT) == null &&
-//         getLoaderManager().getLoader(LOADER_SCRIPT) == null) {
-//         entry.setEnabled(true);
-//         entry.setHint(R.string.input_code_hint);
-//     }
-// }
-
-// @Override
-// public void onLoaderReset(final Loader<String> loader) { /*nothing*/ }
-
-// /**
-//  * Script file loader.
-//  * @author Olexandr Tereshchuk - <a href="http://stanfy.com.ua">Stanfy LLC</a>
-//  */
-// private static class AssetConfigurator extends BaseAsyncTaskLoader<String> {
-//
-//     /** Fragment instance. */
-//     private final ReplFragment fragment;
-//     /** File path. */
-//     private final String path;
-//
-//
-//     public AssetConfigurator(final ReplFragment fragment, final String path) {
-//         super(fragment.getActivity());
-//         this.fragment = fragment;
-//         this.path = path;
-//     }
-//
-//     @Override
-//     public String loadInBackground() {
-//         Reader reader = null;
-//         try {
-//             if (INIT_FILE.equals(path)) {
-//                 reader = new InputStreamReader(fragment.getResources().openRawResource(R.raw.jscheme),
-//                                                Charset.defaultCharset());
-//             } else {
-//                 reader = new FileReader(path);
-//             }
-//             if (jsint.U.to_bool(fragment.js.load(reader))) {
-//                 return fragment.getString(R.string.file_load_success);
-//             }
-//             return fragment.getString(R.string.error_file_load);
-//         } catch (final Throwable t) {
-//             return t.getMessage();
-//         } finally {
-//             if (reader != null) {
-//                 Utils.close(reader);
-//             }
-//         }
-//     }
-//
-//     public String getPath() { return path; }
-// }
 
 void complainDialog(final String title,
                     final String message) {
