@@ -74,8 +74,8 @@ public static ChibiInterpreter initializeInterpreter(Context context) {
 }
 
 public static class EvalResult {
-String result;
-boolean error;
+    String result;
+    boolean error;
 }
 
 public EvalResult evaluate(String input) {
