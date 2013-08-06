@@ -1,0 +1,12 @@
+asset/lib/**
+bin/**
+gen/**
+libs/**
+obj/**
+memopen/**
+.settings/**
+
+project-key.clj
+*.so
+*.zip
+*.o
