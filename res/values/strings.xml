@@ -4,7 +4,7 @@
 
     <string name="file_load_success">File loaded successfully</string>
 
-    <string name="input_code_hint">Write your code here</string>
+    <string name="input_code_hint">&gt;</string>
     <string name="input_code_loading_hint">Loading script&#8230;</string>
 
     <string name="button_evaluate">Evaluate</string>

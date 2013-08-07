@@ -122,7 +122,6 @@ static public void close(Writer out) {
     }
 }
 
-
 public static void trimCache(Context context) {
     try {
         File dir = context.getCacheDir();

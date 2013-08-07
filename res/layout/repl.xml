@@ -26,15 +26,8 @@
               android:hint="@string/input_code_hint"
               android:scrollHorizontally="false"
               android:typeface="monospace"
-              android:layout_weight="1" />
-
-
-    <!-- android:inputType="text|textNoSuggestions"
-         android:imeOptions="actionDone"
-         android:imeActionLabel="@string/button_eval"
-         android:minLines="2"
-
-    -->
+              android:layout_weight="1"
+              />
 
     <Button android:id="@+id/button_eval"
             android:text="@string/button_evaluate"
@@ -43,6 +36,7 @@
             android:gravity="right"
             android:padding="5dp"
             />
+
   </LinearLayout>
 
 </LinearLayout>

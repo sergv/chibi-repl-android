@@ -31,6 +31,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.util.Log;
+
 /**
  * Read Eval Print Loop activity.
  *
@@ -126,7 +128,7 @@ public void onCreate(final Bundle savedInstanceState) {
 @Override
 public void onDestroy() {
     super.onDestroy();
-    Utils.trimCache(getActivity());
+    ChibiInterpreter.resetLibraries(getActivity());
 }
 
 @Override
@@ -215,9 +217,7 @@ public void onViewCreated(final View view, final Bundle savedInstanceState) {
 @Override
 public void onActivityCreated(final Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    if (!initialized) {
-        init();
-    }
+    init();
     Bundle args = getArguments();
     if (args != null && args.containsKey(ARG_FILE)) {
         loadFile(args.getString(ARG_FILE));
@@ -273,7 +273,8 @@ public void onActivityResult(int requestCode, int resultCode, Intent data) {
     }
 }
 
-private void loadFile(final String filename) {
+public void loadFile(final String filename) {
+    Log.d(TAG, "loading " + filename);
     final File f = new File(filename);
     if (f.exists()) {
         String code = "(load \"" + f.getAbsolutePath() + "\")";
@@ -281,8 +282,10 @@ private void loadFile(final String filename) {
               /* if there were no input then paste loading code so
                  user may see it in case of errors */
             entry.setText(code);
+            evaluate(code, true);
+        } else {
+            evaluate(code, false);
         }
-        evaluate(code);
     } else {
         complainDialog("Error while loading",
                        String.format("File %s does not exists",
@@ -293,9 +296,12 @@ private void loadFile(final String filename) {
 
 private void init() {
     if (! initialized) {
-        evaluate("(import (scheme base))");
+        /* import threads (srfi 18) that will be needed for interruptible
+           evaluation later */
         initialized = true;
+        evaluate("(import (scheme base) (srfi 18))")
     }
+    Log.d(TAG, "init done");
 }
 
 private void clear() {
@@ -308,20 +314,29 @@ private void clear() {
     init();
 }
 
-/**
- * Processes the code in the entry EditText and updates the UI.
- */
-private void evaluate(final String input) {
+/* returns true if there was no error */
+private boolean evaluate(final String input) {
+    return evaluate(input, true);
+}
+
+private boolean evaluate(final String input, boolean resetInputView) {
+    if (! initialized) {
+        String msg = "error: attempting to evaluate " + input + " while not initialized";
+        Log.d(TAG, msg);
+        throw new RuntimeException(msg);
+    }
     /* TODO: move this to separate evaluation thread to make interrupts
        work; */
     if (input.length() > 0) {
         ChibiInterpreter.EvalResult result = interp.evaluate(input);
-        if (!result.error) {
+        if (resetInputView  && !result.error) {
             entry.setText("");
         }
         interaction_history_adapter.addCell(new InteractionCell(input, result.result));
+        return !result.error;
     } else {
         Toast.makeText(getActivity(), R.string.error_code_empty, Toast.LENGTH_SHORT).show();
+        return false;
     }
 }
 

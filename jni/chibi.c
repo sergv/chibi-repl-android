@@ -194,9 +194,9 @@ JNI_FN(eval)
                         sexp_print_exception(state->ctx, res, out);
                         sexp_stack_trace(state->ctx, out);
                         had_error = JNI_TRUE;
-                } else if (res != SEXP_VOID) {
+                }
+                if (res != SEXP_VOID) {
                         sexp_write(state->ctx, res, out);
-                        sexp_newline(state->ctx, out);
                 }
         }
         out_str = sexp_get_output_string(state->ctx, out);

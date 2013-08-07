@@ -1,5 +1,7 @@
 package android.chibi.scheme.repl;
 
+import android.content.Context;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +50,7 @@ public static ChibiInterpreter initializeInterpreter(Context context) {
     File cache = context.getCacheDir();
     final String cache_path = cache.getAbsolutePath();
     if (!librariesCopied) {
+        Log.d(TAG, "unpacking lib.zip");
         /* populate cache dir */
         AssetManager assets = context.getAssets();
         try {
@@ -97,6 +100,17 @@ public synchronized void recycle() {
         release(interpreterHandle);
         interpreterHandle = 0;
     }
+}
+
+@Override
+public String toString() {
+    return "<ChibiInterpreter :handle " + interpreterHandle + ">";
+}
+
+public static void resetLibraries(Context context) {
+    librariesCopied = false;
+    Log.d(TAG, "trimming cache");
+    Utils.trimCache(context);
 }
 
 }

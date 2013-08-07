@@ -31,12 +31,12 @@
 
   ;; :local-repo "/home/sergey/.m2/repository/"
   :repositories [["local" "file:///home/sergey/.m2/repository/"]]
-  :plugins [[lein-droid "0.1.0-preview5-enhanced"]]
+  :plugins [[lein-droid "0.1.0"]]
   :dependencies []
   :android ~(merge
-             {;; :sdk-path "/home/sergey/projects/android/android-sdk-linux"
-              ;; :external-classes-paths ["/home/sergey/projects/android/android-sdk-linux/extras/android/support/v4/android-support-v4.jar"]
-              ;; :dex-opts ["-JXmx4096M"]
+             {:sdk-path "/home/sergey/projects/android/android-sdk-linux"
+              :external-classes-paths ["/home/sergey/projects/android/android-sdk-linux/extras/android/support/v4/android-support-v4.jar"]
+              :dex-opts ["-JXmx4096M"]
 
               :proguard-conf-path "proguard.cfg"
               :force-dex-optimize true

@@ -7,6 +7,9 @@ import android.support.v4.app.FragmentActivity;
 import android.view.Window;
 import android.view.WindowManager;
 
+import android.util.Log;
+
+
 /**
  * The main Scheme Droid home screen activity.
  *
@@ -16,6 +19,10 @@ import android.view.WindowManager;
  */
 public class ReplActivity extends FragmentActivity {
 
+public static final String TAG = "chibi";
+
+ReplFragment replFrag;
+
 @Override
 public void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -24,16 +31,23 @@ public void onCreate(final Bundle savedInstanceState) {
     getWindow().setFeatureInt(Window.FEATURE_NO_TITLE, 0);
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 0);
 
-    if (getSupportFragmentManager().findFragmentByTag(ReplFragment.TAG) == null) {
+    Intent intent = getIntent();
+    String fileToLoad = intent != null && intent.getData() != null ?
+        getIntent().getData().getPath() : null ;
+    if (replFrag == null) {
+        Log.d(TAG, "repl does not exist, constructing and loading file " + fileToLoad);
         final Bundle args = new Bundle(1);
-        if (getIntent().getData() != null) {
-            args.putString(ReplFragment.ARG_FILE, getIntent().getData().getPath());
+        if (fileToLoad != null) {
+            args.putString(ReplFragment.ARG_FILE, fileToLoad);
         }
-        final ReplFragment f = new ReplFragment();
-        f.setArguments(args);
+        replFrag = new ReplFragment();
+        replFrag.setArguments(args);
         getSupportFragmentManager().beginTransaction().replace(android.R.id.content,
-                                                               f,
+                                                               replFrag,
                                                                ReplFragment.TAG).commit();
+    } else if (fileToLoad != null) {
+        Log.d(TAG, "repl exists, loading file " + fileToLoad);
+        replFrag.loadFile(fileToLoad);
     }
 }
 
